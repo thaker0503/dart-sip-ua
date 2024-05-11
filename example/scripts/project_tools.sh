@@ -1,8 +1,8 @@
 #!/bin/bash
 
 FLUTTER_APP_FOLDER=$(cd `dirname $0`/../; pwd)
-FLUTTER_APP_ORG=com.github.cloudwebrtc
-FLUTTER_APP_PROJECT_NAME=dart_sip_ua_example
+FLUTTER_APP_ORG=com.packaage.mct_sip_ua
+FLUTTER_APP_PROJECT_NAME=mct_sip_ua
 CMD=$1
 
 function cleanup() {

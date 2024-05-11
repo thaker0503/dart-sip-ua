@@ -294,6 +294,7 @@ class Transport {
     // Text message.
     else {
       logger.d('received text message:\n\n$data\n');
+      logger.d('status $status');
     }
 
     ondata(this, data);

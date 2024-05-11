@@ -1,8 +1,10 @@
 import 'dart:async';
+import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sip_ua/sip_ua.dart';
 
 import 'widgets/action_button.dart';
@@ -26,6 +28,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
   EdgeInsetsGeometry? _localVideoMargin;
   MediaStream? _localStream;
   MediaStream? _remoteStream;
+  late SharedPreferences _preferences;
 
   bool _showNumPad = false;
   String _timeLabel = '00:00';
@@ -322,6 +325,15 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
     });
   }
 
+  void _logCall(String type, String info) async {
+    final List<String> logs = _preferences.getStringList('callLogs') ?? [];
+    DateTime now = DateTime.now();
+    String entry = jsonEncode(
+        {'type': type, 'info': info, 'timestamp': now.toIso8601String()});
+    logs.add(entry);
+    await _preferences.setStringList('callLogs', logs);
+  }
+
   void _toggleSpeaker() {
     if (_localStream != null) {
       _speakerOn = !_speakerOn;
@@ -373,17 +385,18 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
 
   Widget _buildActionButtons() {
     final hangupBtn = ActionButton(
-      title: "hangup",
-      onPressed: () => _handleHangup(),
-      icon: Icons.call_end,
-      fillColor: Colors.red,
-    );
+        title: "hangup",
+        onPressed: () => _handleHangup(),
+        icon: Icons.call_end,
+        fillColor: Colors.red,
+        size: 40);
 
     final hangupBtnInactive = ActionButton(
       title: "hangup",
       onPressed: () {},
       icon: Icons.call_end,
       fillColor: Colors.grey,
+      size: 40,
     );
 
     final basicActions = <Widget>[];
@@ -393,11 +406,14 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
       case CallStateEnum.NONE:
       case CallStateEnum.CONNECTING:
         if (direction == 'INCOMING') {
+          _logCall('Incoming',
+              'Received call from: ${call!.remote_display_name ?? call!.remote_identity}');
           basicActions.add(ActionButton(
             title: "Accept",
             fillColor: Colors.green,
             icon: Icons.phone,
             onPressed: () => _handleAccept(),
+            size: 40,
           ));
           basicActions.add(hangupBtn);
         } else {
@@ -412,6 +428,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
             icon: _audioMuted ? Icons.mic_off : Icons.mic,
             checked: _audioMuted,
             onPressed: () => _muteAudio(),
+            size: 40,
           ));
 
           if (voiceOnly) {
@@ -419,19 +436,21 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
               title: "keypad",
               icon: Icons.dialpad,
               onPressed: () => _handleKeyPad(),
+              size: 40,
             ));
           } else {
             advanceActions.add(ActionButton(
               title: "switch camera",
               icon: Icons.switch_video,
               onPressed: () => _switchCamera(),
+              size: 40,
             ));
           }
 
           if (voiceOnly) {
             advanceActions.add(ActionButton(
-              title: _speakerOn ? 'speaker off' : 'speaker on',
-              icon: _speakerOn ? Icons.volume_off : Icons.volume_up,
+              title: _speakerOn ? 'speaker on' : 'speaker off',
+              icon: !_speakerOn ? Icons.volume_off : Icons.volume_up,
               checked: _speakerOn,
               onPressed: () => _toggleSpeaker(),
             ));
@@ -563,7 +582,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
                           (_hold
                               ? ' PAUSED BY ${_holdOriginator!.toUpperCase()}'
                               : ''),
-                      style: TextStyle(fontSize: 24, color: Colors.black54),
+                      style: TextStyle(fontSize: 24),
                     ),
                   ),
                 ),
@@ -572,7 +591,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
                     padding: const EdgeInsets.all(6),
                     child: Text(
                       '$remoteIdentity',
-                      style: TextStyle(fontSize: 18, color: Colors.black54),
+                      style: TextStyle(fontSize: 18),
                     ),
                   ),
                 ),
@@ -581,7 +600,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
                     padding: const EdgeInsets.all(6),
                     child: Text(
                       _timeLabel,
-                      style: TextStyle(fontSize: 14, color: Colors.black54),
+                      style: TextStyle(fontSize: 14),
                     ),
                   ),
                 )
