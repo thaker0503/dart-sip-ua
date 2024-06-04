@@ -636,6 +636,11 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
   @override
   void onNewMessage(SIPMessageRequest msg) {
     // NO OP
+    // SIPMessageRequest(this.message, this.originator, this.request);
+    if (msg.originator.toString() == 'remote') {
+      _logCall(
+          'Incoming', 'Received message from: ${msg.originator.toString()}');
+    }
   }
 
   @override

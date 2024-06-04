@@ -30,7 +30,7 @@ class MyApp extends StatelessWidget {
 
   Future<bool> isLoggedIn() async {
     final prefs = await SharedPreferences.getInstance();
-    return (prefs.getBool('isLoggedIn')! &&
+    return ((prefs.getBool('isLoggedIn') ?? false) &&
         _helper.registerState.state == RegistrationStateEnum.REGISTERED);
   }
 

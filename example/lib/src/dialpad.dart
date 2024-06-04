@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_webrtc/flutter_webrtc.dart';
@@ -5,7 +7,6 @@ import 'package:mct_calling_app/src/callhistory.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:sip_ua/sip_ua.dart';
-import 'dart:convert';
 
 import 'widgets/action_button.dart';
 
@@ -65,7 +66,8 @@ class _MyDialPadWidget extends State<DialPadWidget>
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
         defaultTargetPlatform == TargetPlatform.macOS ||
-        defaultTargetPlatform == TargetPlatform.windows) {
+        defaultTargetPlatform == TargetPlatform.windows ||
+        kIsWeb) {
       print('awaiting access');
       await Permission.microphone.request();
       // await Permission.camera.request();
@@ -292,7 +294,7 @@ class _MyDialPadWidget extends State<DialPadWidget>
             icon: Icon(Icons.logout),
             onPressed: () {
               helper!.unregister(true);
-              _preferences.clear();
+              // _preferences.clear();
               Navigator.pushReplacementNamed(context, '/login');
             },
           ),
@@ -487,11 +489,14 @@ class _MyDialPadWidget extends State<DialPadWidget>
 
   @override
   void onNewMessage(SIPMessageRequest msg) {
-    //Save the incoming message to DB
+    // SIPMessageRequest(this.message, this.originator, this.request);
+
     String? msgBody = msg.request.body as String?;
-    // if (msgBody != null && msgBody.isNotEmpty) {
-    //   _updateCallHistory(msgBody); // Save incoming number
-    // }
+    if (msg.originator.toString() == 'remote') {
+      _logCall(
+          'Incoming', 'Received message from: ${msg.originator.toString()}');
+    }
+
     setState(() {
       receivedMsg = msgBody;
     });
