@@ -199,7 +199,7 @@ class _AuthenticationPageState extends State<AuthenticationPage>
 
     // Perform SIP registration
     await helper?.start(settings);
-    print('State changed' + helper!.registerState.state.toString());
+    print('State changed${helper!.registerState.state}');
 
     await prefs.setBool('isLoggedIn', true);
     // this.registrationStateChanged(helper!.registerState);

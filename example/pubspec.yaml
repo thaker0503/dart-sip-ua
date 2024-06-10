@@ -27,20 +27,23 @@ dependencies:
   permission_handler: ^11.1.0
   flutter_webrtc: ^0.9.40
   animated_splash_screen: ^1.3.0
-  lottie: ^1.0.1
+  lottie: ^3.1.2
   getwidget: ^4.0.0
   
 
 
+  intl: any
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  lints: ^3.0.0
+  lints: ^4.0.0
+  msix: ^3.16.7
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
 
 # The following section is specific to Flutter.
+  # mct_sip_ua: any
 flutter:
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
@@ -49,7 +52,6 @@ flutter:
   # To add assets to your application, add an assets section, like this:
   assets:
     - assets/
-    - assets/images/
     - assets/animations/
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/assets-and-images/#resolution-aware.
@@ -74,3 +76,16 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/custom-fonts/#from-packages
+msix_config:
+  display_name: MCT Softphone
+  publisher_display_name: MCT
+  identity_name: mct.mct.mct-calling-app
+  app_installer: #<-- app installer configuration
+    publish_folder_path: C:\Project\Published
+    hours_between_update_checks: 0
+    automatic_background_task: true
+    update_blocks_activation: true
+    show_prompt: true
+    force_update_from_any_version: false
+  msix_version: 1.0.0.0
+  capabilities: internetClient, microphone

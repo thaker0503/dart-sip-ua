@@ -3,8 +3,22 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:sip_ua/sip_ua.dart';
 
 class CallHistoryPage extends StatefulWidget {
+  final SharedPreferences? preferences;
+  final SIPUAHelper? helper;
+  final Function? handleSelectedNumber;
+  final bool? isWideScreen;
+
+  const CallHistoryPage({
+    Key? key,
+    this.preferences,
+    required this.helper,
+    required this.handleSelectedNumber,
+    required this.isWideScreen,
+  }) : super(key: key);
+
   @override
   _CallHistoryPageState createState() => _CallHistoryPageState();
 }
@@ -13,7 +27,7 @@ class _CallHistoryPageState extends State<CallHistoryPage>
     with SingleTickerProviderStateMixin {
   List<CallHistoryEntry> _callHistoryData = [];
   List<CallHistoryEntry> _filteredCallHistoryData = [];
-  String _callHistoryKey = 'callLogs';
+  final String _callHistoryKey = 'callLogs';
   TabController? _tabController;
 
   @override
@@ -102,20 +116,36 @@ class _CallHistoryPageState extends State<CallHistoryPage>
   Widget _callHistoryListItem(CallHistoryEntry entry) {
     IconData callIcon =
         entry.type == 'Outgoing' ? Icons.call_made : Icons.call_received;
-    return ListTile(
-      leading: Icon(callIcon, color: Colors.grey[600]),
-      title: Text(entry.info, style: TextStyle(color: Colors.white)),
-      trailing: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: <Widget>[
-          Text('Today',
-              style: TextStyle(
-                  color: Colors
-                      .grey[500])), // Consider calculating the relative time
-          Text(DateFormat('h:mm a').format(entry.timestamp),
-              style: TextStyle(color: Colors.grey[500]))
-        ],
+    return GestureDetector(
+      onTap: () {
+        widget.handleSelectedNumber!(entry.info);
+        if (!widget.isWideScreen!) {
+          Navigator.pop(context);
+        }
+      },
+      child: Container(
+        padding: EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(color: Colors.grey),
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(callIcon, color: Colors.white),
+            SizedBox(width: 10),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(entry.info, style: TextStyle(color: Colors.white)),
+                Text(
+                  DateFormat('EEE, MMM d, h:mm a').format(entry.timestamp),
+                  style: TextStyle(color: Colors.white),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

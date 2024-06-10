@@ -330,7 +330,7 @@ class _MyCallScreenWidget extends State<CallScreenWidget>
     DateTime now = DateTime.now();
     String entry = jsonEncode(
         {'type': type, 'info': info, 'timestamp': now.toIso8601String()});
-    logs.add(entry);
+    logs.insert(0, entry);
     await _preferences.setStringList('callLogs', logs);
   }
 

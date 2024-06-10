@@ -56,7 +56,7 @@ class _MyDialPadWidget extends State<DialPadWidget>
     DateTime now = DateTime.now();
     String entry = jsonEncode(
         {'type': type, 'info': info, 'timestamp': now.toIso8601String()});
-    logs.add(entry);
+    logs.insert(0, entry);
     await _preferences.setStringList('callLogs', logs);
   }
 
@@ -65,8 +65,8 @@ class _MyDialPadWidget extends State<DialPadWidget>
     final dest = _textController?.text;
     if (defaultTargetPlatform == TargetPlatform.android ||
         defaultTargetPlatform == TargetPlatform.iOS ||
-        defaultTargetPlatform == TargetPlatform.macOS ||
         defaultTargetPlatform == TargetPlatform.windows ||
+        defaultTargetPlatform == TargetPlatform.macOS ||
         kIsWeb) {
       print('awaiting access');
       await Permission.microphone.request();
@@ -93,39 +93,60 @@ class _MyDialPadWidget extends State<DialPadWidget>
       );
       return null;
     }
-    _logCall('Outgoing', 'Dialing: $dest'); // Log outgoing call
+    _logCall('Outgoing', '$dest'); // Log outgoing call
     print('Dialing: $dest');
 
     final mediaConstraints = <String, dynamic>{
       'audio': true,
-      'video': {
-        'width': '1280',
-        'height': '720',
-        'facingMode': 'user',
-      }
+      'video': voiceOnly
+          ? false
+          : {
+              'width': 1280,
+              'height': 720,
+              'facingMode': 'user',
+            },
     };
 
     MediaStream mediaStream;
 
-    if (kIsWeb && !voiceOnly) {
-      mediaStream =
-          await navigator.mediaDevices.getDisplayMedia(mediaConstraints);
-      mediaConstraints['video'] = false;
-      MediaStream userStream =
-          await navigator.mediaDevices.getUserMedia(mediaConstraints);
-      final audioTracks = userStream.getAudioTracks();
-      if (audioTracks.isNotEmpty) {
-        mediaStream.addTrack(audioTracks.first, addToNative: true);
+    try {
+      if (kIsWeb && !voiceOnly) {
+        mediaStream =
+            await navigator.mediaDevices.getDisplayMedia(mediaConstraints);
+        mediaConstraints['video'] = false;
+        MediaStream userStream =
+            await navigator.mediaDevices.getUserMedia(mediaConstraints);
+        final audioTracks = userStream.getAudioTracks();
+        if (audioTracks.isNotEmpty) {
+          mediaStream.addTrack(audioTracks.first, addToNative: true);
+        }
+      } else {
+        mediaStream =
+            await navigator.mediaDevices.getUserMedia(mediaConstraints);
       }
-    } else {
-      if (voiceOnly) {
-        mediaConstraints['video'] = !voiceOnly;
-      }
-      mediaStream = await navigator.mediaDevices.getUserMedia(mediaConstraints);
+      print('Media stream acquired successfully.');
+    } catch (e) {
+      print('Error getting user media: $e');
+      showDialog<void>(
+        context: context,
+        barrierDismissible: false,
+        builder: (BuildContext context) {
+          return AlertDialog(
+            title: Text('Error'),
+            content: Text('Could not get media: $e'),
+            actions: <Widget>[
+              TextButton(
+                child: Text('Ok'),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+              ),
+            ],
+          );
+        },
+      );
+      return null;
     }
-
-    helper!.call(dest, voiceonly: voiceOnly, mediaStream: mediaStream);
-    _preferences.setString('dest', dest);
     return null;
   }
 
@@ -145,8 +166,14 @@ class _MyDialPadWidget extends State<DialPadWidget>
     });
   }
 
+  void handleSelectedNumber(String number) {
+    setState(() {
+      _textController!.text = number;
+    });
+  }
+
   List<Widget> _buildNumPad() {
-    final screenWidth = MediaQuery.of(context).size.width;
+    // final screenWidth = MediaQuery.of(context).size.width;
     final labels = [
       [
         {'1': ''},
@@ -286,7 +313,12 @@ class _MyDialPadWidget extends State<DialPadWidget>
                   Navigator.push(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => CallHistoryPage()));
+                          builder: (context) => CallHistoryPage(
+                                helper: helper,
+                                preferences: _preferences,
+                                handleSelectedNumber: handleSelectedNumber,
+                                isWideScreen: isWideScreen,
+                              )));
                 },
               ),
         actions: [
@@ -362,7 +394,12 @@ class _MyDialPadWidget extends State<DialPadWidget>
                         child: _buildDialContent(constraints.constrainHeight()),
                       ),
                       Expanded(
-                        child: CallHistoryPage(),
+                        child: CallHistoryPage(
+                          helper: helper,
+                          preferences: _preferences,
+                          handleSelectedNumber: handleSelectedNumber,
+                          isWideScreen: isWideScreen,
+                        ),
                       ),
                     ],
                   );
@@ -376,7 +413,7 @@ class _MyDialPadWidget extends State<DialPadWidget>
     );
   }
 
-  Widget _buildVerticalLayout(height) {
+  Widget _buildVerticalLayout(height, isWideScreen) {
     print('Building vertical layout...');
     return Column(
       children: <Widget>[
@@ -384,13 +421,18 @@ class _MyDialPadWidget extends State<DialPadWidget>
           child: _buildDialContent(height),
         ),
         Expanded(
-          child: CallHistoryPage(),
+          child: CallHistoryPage(
+            helper: helper,
+            preferences: _preferences,
+            handleSelectedNumber: handleSelectedNumber,
+            isWideScreen: isWideScreen,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildHorizontalLayout(height) {
+  Widget _buildHorizontalLayout(height, isWideScreen) {
     print('Building horizontal layout...');
     return Row(
       children: <Widget>[
@@ -398,7 +440,12 @@ class _MyDialPadWidget extends State<DialPadWidget>
           child: _buildDialContent(height),
         ),
         Expanded(
-          child: CallHistoryPage(),
+          child: CallHistoryPage(
+            helper: helper,
+            preferences: _preferences,
+            handleSelectedNumber: handleSelectedNumber,
+            isWideScreen: isWideScreen,
+          ),
         ),
       ],
     );
